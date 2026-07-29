@@ -1,4 +1,5 @@
-import { integer, pgTable, varchar, timestamp, text,pgEnum } from "drizzle-orm/pg-core";
+import { integer, pgTable, varchar, timestamp, text, pgEnum, check } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const usersTable = pgTable("users", {
     id: varchar({ length: 255 }).primaryKey(),
@@ -10,6 +11,9 @@ export const usersTable = pgTable("users", {
 
 export const interviewStatsTable = pgTable("interview_stats", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    resumeMetadata: text("resume_metadata"),
+    githubMetadata: text("github_metadata"),
+    jobDescription: text("job_description"),
     total_score: integer().notNull(),
     total_interview_count: integer().notNull(),
     feedback: text().notNull(),
@@ -21,7 +25,12 @@ export const interviewStatsTable = pgTable("interview_stats", {
         .notNull()
         .unique()
         .references(() => usersTable.id, { onDelete: "cascade" }),
-});
+}, (table) => [
+    check(
+        "at_least_one_metadata",
+        sql`${table.resumeMetadata} IS NOT NULL OR ${table.githubMetadata} IS NOT NULL OR ${table.jobDescription} IS NOT NULL`
+    ),
+]);
 
 export const overallStatsTable = pgTable("overall_stats", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
