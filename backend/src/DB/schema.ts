@@ -1,4 +1,4 @@
-import { integer, pgTable, varchar, timestamp, text } from "drizzle-orm/pg-core";
+import { integer, pgTable, varchar, timestamp, text,pgEnum } from "drizzle-orm/pg-core";
 
 export const usersTable = pgTable("users", {
     id: varchar({ length: 255 }).primaryKey(),
@@ -33,4 +33,24 @@ export const overallStatsTable = pgTable("overall_stats", {
         .notNull()
         .unique()
         .references(() => usersTable.id, { onDelete: "cascade" }),
+});
+export const MessageType = pgEnum("message_type", [
+    "user",
+    "agent",
+]);
+
+export const conversation = pgTable("conversation", {
+    id: varchar("id", { length: 255 }).primaryKey(),
+    type: MessageType("type").notNull(),
+    messages: text().array().notNull(),
+    userId: varchar("user_id", { length: 255 })
+        .notNull()
+        .references(() => usersTable.id, { onDelete: "cascade" }),
+  
+    interviewStatsId: integer()
+        .notNull()
+        .unique()
+        .references(() => interviewStatsTable.id, { onDelete: "cascade" }),
+    created_at: timestamp().defaultNow().notNull(),
+
 });
