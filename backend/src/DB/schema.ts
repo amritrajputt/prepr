@@ -15,15 +15,14 @@ export const interviewStatsTable = pgTable("interview_stats", {
     githubMetadata: text("github_metadata"),
     jobDescription: text("job_description"),
     total_score: integer().notNull(),
-    total_interview_count: integer().notNull(),
     feedback: text().notNull(),
     relevance: text().notNull(),
     clarity: text().notNull(),
     depth: text().notNull(),
     experience: text().notNull(),
+    created_at: timestamp().defaultNow().notNull(),  
     userId: varchar("user_id", { length: 255 })
         .notNull()
-        .unique()
         .references(() => usersTable.id, { onDelete: "cascade" }),
 }, (table) => [
     check(
@@ -34,15 +33,17 @@ export const interviewStatsTable = pgTable("interview_stats", {
 
 export const overallStatsTable = pgTable("overall_stats", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    total_score: integer().notNull(),
-    total_interview_count: integer().notNull(),
-    feedback: text().notNull(),
+    total_score: integer().notNull(),           
+    total_interview_count: integer().notNull(), 
+    feedback: text().notNull(),                 
     gap_analysis: text().notNull(),
     userId: varchar("user_id", { length: 255 })
         .notNull()
-        .unique()
+        .unique()   
         .references(() => usersTable.id, { onDelete: "cascade" }),
 });
+
+
 export const MessageType = pgEnum("message_type", [
     "user",
     "agent",
