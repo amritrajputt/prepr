@@ -24,6 +24,6 @@ const handleUpload = (req: express.Request, res: express.Response, next: express
   })
 }
 
-resumeRouter.post("/uploadResume", handleUpload, ResumeParsingController.parseResume)
+resumeRouter.post("/uploadresume", handleUpload, ResumeParsingController.parseResume)
 
 export default resumeRouter
