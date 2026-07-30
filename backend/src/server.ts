@@ -5,6 +5,7 @@ dotenv.config();
 import { clerkMiddleware, clerkClient, getAuth } from '@clerk/express';
 import { authRoutes } from "./module/auth/auth.routes.js";
 import resumeRouter from "./module/resume parsing/resumeParsing.route.js";
+import githubRouter from "./module/github parsing/githubResume.route.js";
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(clerkMiddleware());
 
 app.use('/api/resume', resumeRouter);
+app.use('/api/github', githubRouter);
 
 const PORT = process.env.PORT || 3000;
 
