@@ -14,7 +14,7 @@ export class JDController{
             return res.status(400).json(ApiError.badRequest("No jdText provided"))
         }
         try {
-            const jd = await JDService.saveJd(jdText)
+            const jd = await JDService.saveJd(userId,jdText)
             return res.status(200).json(ApiResponse.success({userId, jd}))
         } catch (err: any) {
             console.error("JD save error:", err)
