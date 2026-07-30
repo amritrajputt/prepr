@@ -77,7 +77,7 @@ export const githubMetadataTable = pgTable("github_metadata", {
   createdAt: timestamp().defaultNow().notNull(),
 })
 
-export const jobMetadataTable = pgTable("job_metadata", {
+export const jobDescriptionMetadataTable = pgTable("job_description_metadata", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   userId: varchar("user_id", { length: 255 })
     .notNull()

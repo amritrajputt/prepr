@@ -6,6 +6,7 @@ import { clerkMiddleware, clerkClient, getAuth } from '@clerk/express';
 import { authRoutes } from "./module/auth/auth.routes.js";
 import resumeRouter from "./module/resume parsing/resumeParsing.route.js";
 import githubRouter from "./module/github parsing/githubResume.route.js";
+import jdRouter from "./module/JD parsing/jd.route.js";
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(clerkMiddleware());
 
 app.use('/api/resume', resumeRouter);
 app.use('/api/github', githubRouter);
+app.use('/api/jd', jdRouter);
 
 const PORT = process.env.PORT || 3000;
 

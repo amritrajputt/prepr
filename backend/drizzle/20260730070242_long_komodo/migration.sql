@@ -1,0 +1,1 @@
+ALTER TABLE "job_metadata" RENAME TO "job_description_metadata";
