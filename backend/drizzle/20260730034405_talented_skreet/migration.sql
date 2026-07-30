@@ -1,0 +1,1 @@
+ALTER TABLE "interview_stats" DROP COLUMN "experience";

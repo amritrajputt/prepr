@@ -11,25 +11,17 @@ export const usersTable = pgTable("users", {
 
 export const interviewStatsTable = pgTable("interview_stats", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    resumeMetadata: text("resume_metadata"),
-    githubMetadata: text("github_metadata"),
-    jobDescription: text("job_description"),
     total_score: integer().notNull(),
     feedback: text().notNull(),
     relevance: text().notNull(),
     clarity: text().notNull(),
     depth: text().notNull(),
-    experience: text().notNull(),
     created_at: timestamp().defaultNow().notNull(),  
     userId: varchar("user_id", { length: 255 })
         .notNull()
         .references(() => usersTable.id, { onDelete: "cascade" }),
-}, (table) => [
-    check(
-        "at_least_one_metadata",
-        sql`${table.resumeMetadata} IS NOT NULL OR ${table.githubMetadata} IS NOT NULL OR ${table.jobDescription} IS NOT NULL`
-    ),
-]);
+},
+);
 
 export const overallStatsTable = pgTable("overall_stats", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
@@ -64,3 +56,32 @@ export const conversation = pgTable("conversation", {
     created_at: timestamp().defaultNow().notNull(),
 
 });
+
+export const resumesTable = pgTable("resumes", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  userId: varchar("user_id", { length: 255 })
+    .notNull()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
+  rawText: text("raw_text").notNull(),
+  fileName: varchar("file_name", { length: 255 }),
+  createdAt: timestamp().defaultNow().notNull(),
+})
+
+
+export const githubMetadataTable = pgTable("github_metadata", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  userId: varchar("user_id", { length: 255 })
+    .notNull()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
+  data: text("metadata").notNull(),
+  createdAt: timestamp().defaultNow().notNull(),
+})
+
+export const jobMetadataTable = pgTable("job_metadata", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  userId: varchar("user_id", { length: 255 })
+    .notNull()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
+  data: text("jd_text").notNull(),
+  createdAt: timestamp().defaultNow().notNull(),
+})
