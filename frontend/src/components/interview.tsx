@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { useUser, UserButton } from "@clerk/react";
-import { Bot, User as UserIcon, X } from "lucide-react";
+import { useUser, useAuth, UserButton } from "@clerk/react";
+import { Bot, Mic, User as UserIcon, X } from "lucide-react";
+import api from "../services/api";
 
 type InterviewProps = {
   interviewId?: string;
@@ -11,8 +12,18 @@ export function Interview({ interviewId: propInterviewId }: InterviewProps) {
   const routeParams = useParams({ strict: false }) as Record<string, string | undefined>;
   const interviewId = propInterviewId ?? routeParams.interviewId;
   const { user } = useUser();
+  const { getToken } = useAuth();
   const navigate = useNavigate();
   const audioElement = useRef<HTMLAudioElement | null>(null);
+  const [showInstruction, setShowInstruction] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowInstruction(false);
+    }, 10000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     let pc: RTCPeerConnection | null = new RTCPeerConnection();
@@ -35,17 +46,22 @@ export function Interview({ interviewId: propInterviewId }: InterviewProps) {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
 
-        const sdpResponse = await fetch("/session", {
-          method: "POST",
-          body: offer.sdp,
-          headers: {
-            "Content-Type": "application/sdp",
-          },
+        const token = await getToken();
+        const headers: Record<string, string> = {
+          "Content-Type": "application/sdp",
+        };
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const sdpResponse = await api.post(`/api/session/${interviewId || "general"}`, offer.sdp, {
+          headers,
+          responseType: "text",
         });
 
         const answer: RTCSessionDescriptionInit = {
           type: "answer",
-          sdp: await sdpResponse.text(),
+          sdp: sdpResponse.data,
         };
         await pc.setRemoteDescription(answer);
       } catch (err) {
@@ -87,6 +103,18 @@ export function Interview({ interviewId: propInterviewId }: InterviewProps) {
       </header>
 
       <main className="w-full max-w-5xl my-auto py-8">
+        {/* Say Go Ahead Instruction Card (Hides after 10 seconds) */}
+        {showInstruction && (
+          <div className="w-full max-w-xl mx-auto mb-8 p-4 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 text-center backdrop-blur-md shadow-lg transition-all duration-500">
+            <p className="text-sm font-semibold text-emerald-400 flex items-center justify-center gap-2">
+              <Mic className="w-4 h-4 animate-bounce text-emerald-400" />
+              Say <span className="underline font-bold text-emerald-300 font-mono text-base px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/30">"Go ahead"</span> to start your interview
+            </p>
+            <p className="text-xs text-muted-foreground mt-1.5">
+              Speak into your microphone whenever you are ready to begin the session.
+            </p>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center justify-center">
           <div className="flex flex-col items-center justify-center p-8 rounded-2xl border border-border/50 bg-card/60 backdrop-blur-md shadow-xl text-center">
             <div className="relative mb-6">
@@ -101,6 +129,10 @@ export function Interview({ interviewId: propInterviewId }: InterviewProps) {
               <Bot className="w-5 h-5 text-primary" /> AI Interviewer
             </h2>
             <p className="text-xs text-muted-foreground mt-1">Realtime Voice Agent</p>
+            <div className="mt-3 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-xs font-medium flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+              <span>Session Active — Go Ahead & Speak</span>
+            </div>
           </div>
 
           <div className="flex flex-col items-center justify-center p-8 rounded-2xl border border-border/50 bg-card/60 backdrop-blur-md shadow-xl text-center">
