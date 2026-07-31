@@ -9,10 +9,12 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { useNavigate } from '@tanstack/react-router';
 import { parseResume } from '@/services/userdata';
 
 export default function FileUpload04() {
   const { getToken } = useAuth();
+  const navigate = useNavigate();
   const [uploadState, setUploadState] = useState<{
     file: File | null;
     progress: number;
@@ -91,6 +93,7 @@ export default function FileUpload04() {
         duration: 4000,
       });
       console.log('Upload result:', result);
+      navigate({ to: '/interview/$interviewId', params: { interviewId: 'resume' } as any });
     } catch (error: unknown) {
       console.error('Resume upload error:', error);
       const errorMessage =

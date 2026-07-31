@@ -4,12 +4,14 @@ import { useAuth } from "@clerk/react";
 import axios from "axios";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "@tanstack/react-router";
 import { uploadJD } from "@/services/userdata";
 
 export function TextBoxComponent() {
   const [text, setText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { getToken } = useAuth();
+  const navigate = useNavigate();
 
   const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(event.target.value);
@@ -28,6 +30,7 @@ export function TextBoxComponent() {
         duration: 4000,
       });
       console.log("JD upload result:", result);
+      navigate({ to: "/interview/$interviewId", params: { interviewId: "jd" } as any });
     } catch (error: unknown) {
       console.error("JD upload error:", error);
       const errorMessage =

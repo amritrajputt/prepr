@@ -5,6 +5,7 @@ import axios from "axios"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useNavigate } from "@tanstack/react-router"
 import { uploadGithubUsername } from "@/services/userdata"
 
 export type InputProps = React.InputHTMLAttributes<HTMLInputElement>
@@ -40,6 +41,7 @@ export function InputField({
   const [username, setUsername] = React.useState("")
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const { getToken } = useAuth()
+  const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -54,6 +56,7 @@ export function InputField({
         duration: 4000,
       })
       console.log("GitHub scrape result:", result)
+      navigate({ to: "/interview/$interviewId", params: { interviewId: "github" } as any })
     } catch (error: unknown) {
       console.error("GitHub scrape error:", error)
       const errorMessage =

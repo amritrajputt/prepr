@@ -28,6 +28,7 @@
     "pg": "^8.22.0",
     "sonner": "^2.0.7",
     "tsc-watch": "^7.2.1",
+    "ws": "^8.21.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -36,6 +37,7 @@
     "@types/multer": "^2.2.0",
     "@types/node": "latest",
     "@types/pg": "^8.20.0",
+    "@types/ws": "^8.18.1",
     "drizzle-kit": "1.0.0-rc.4",
     "tsx": "^4.23.1"
   }
