@@ -17,11 +17,12 @@ export function Interview({ interviewId: propInterviewId }: InterviewProps) {
   useEffect(() => {
     let pc: RTCPeerConnection | null = new RTCPeerConnection();
 
-    audioElement.current = document.createElement("audio");
-    audioElement.current.autoplay = true;
     pc.ontrack = (e) => {
       if (audioElement.current) {
         audioElement.current.srcObject = e.streams[0];
+        audioElement.current.play().catch((err) => {
+          console.warn("Autoplay prevented or failed, user interaction may be required:", err);
+        });
       }
     };
 

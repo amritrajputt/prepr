@@ -5,10 +5,12 @@ export class SessionService {
       throw new Error("OPENAI_API_KEY is not configured in environment variables (.env)");
     }
 
+    const model = process.env.OPENAI_REALTIME_MODEL || "gpt-realtime-2.1-mini";
+
     const sessionConfig = JSON.stringify({
       type: "realtime",
-      model: process.env.OPENAI_REALTIME_MODEL || "gpt-realtime-2.1",
-      audio: { output: { voice: process.env.OPENAI_REALTIME_VOICE || "cedar" } },
+      model,
+      audio: { output: { voice: process.env.OPENAI_REALTIME_VOICE || "verse" } },
     });
 
     const fd = new FormData();
@@ -25,7 +27,6 @@ export class SessionService {
     });
 
     if (!r.ok && (r.status === 404 || r.status === 400)) {
-      const model = process.env.OPENAI_REALTIME_MODEL || "gpt-4o-realtime-preview-2024-12-17";
       console.warn(`Primary Realtime calls endpoint returned ${r.status}. Trying OpenAI WebRTC fallback with model ${model}...`);
       r = await fetch(`https://api.openai.com/v1/realtime?model=${model}`, {
         method: "POST",
