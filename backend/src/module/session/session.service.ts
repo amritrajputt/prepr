@@ -1,5 +1,7 @@
+import axios from "axios";
+
 export class SessionService {
-  static async createRealtimeSession(sdpText: string): Promise<string> {
+  static async createRealtimeSession(sdpText: string): Promise<{ sdp: string; callId: string }> {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       throw new Error("OPENAI_API_KEY is not configured in environment variables (.env)");
@@ -17,34 +19,38 @@ export class SessionService {
     fd.set("sdp", sdpText);
     fd.set("session", sessionConfig);
 
-    let r = await fetch("https://api.openai.com/v1/realtime/calls", {
-      method: "POST",
+    let response = await axios.post("https://api.openai.com/v1/realtime/calls", fd, {
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "OpenAI-Safety-Identifier": "hashed-user-id",
       },
-      body: fd,
+      responseType: "text",
+      validateStatus: () => true,
     });
 
-    if (!r.ok && (r.status === 404 || r.status === 400)) {
-      console.warn(`Primary Realtime calls endpoint returned ${r.status}. Trying OpenAI WebRTC fallback with model ${model}...`);
-      r = await fetch(`https://api.openai.com/v1/realtime?model=${model}`, {
-        method: "POST",
+    if (response.status !== 200 && (response.status === 404 || response.status === 400)) {
+      console.warn(`Primary Realtime calls endpoint returned ${response.status}. Trying OpenAI WebRTC fallback with model ${model}...`);
+      response = await axios.post(`https://api.openai.com/v1/realtime?model=${model}`, sdpText, {
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/sdp",
         },
-        body: sdpText,
+        responseType: "text",
+        validateStatus: () => true,
       });
     }
 
-    if (!r.ok) {
-      const errorText = await r.text();
-      throw new Error(`OpenAI Realtime API error (${r.status}): ${errorText}`);
+    const locationHeader = response.headers["location"] || response.headers["Location"];
+    const location = typeof locationHeader === "string" ? locationHeader : undefined;
+    const callId = location?.split("/").pop() || "";
+    console.log("Realtime Call ID:", callId);
+
+    if (response.status < 200 || response.status >= 300) {
+      const errorText = typeof response.data === "string" ? response.data : JSON.stringify(response.data);
+      throw new Error(`OpenAI Realtime API error (${response.status}): ${errorText}`);
     }
 
-    const sdp = await r.text();
-    return sdp;
+    return { sdp: response.data, callId };
   }
 }
 
