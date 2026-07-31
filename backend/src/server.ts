@@ -7,6 +7,7 @@ import { authRoutes } from "./module/auth/auth.routes.js";
 import resumeRouter from "./module/resume parsing/resumeParsing.route.js";
 import githubRouter from "./module/github parsing/githubResume.route.js";
 import jdRouter from "./module/JD parsing/jd.route.js";
+import sessionRouter from "./module/session/session.route.js";
 
 const app = express();
 
@@ -18,6 +19,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(clerkMiddleware());
 
+app.use('/session', sessionRouter);
+app.use('/api/session', sessionRouter);
 app.use('/api/resume', resumeRouter);
 app.use('/api/github', githubRouter);
 app.use('/api/jd', jdRouter);
