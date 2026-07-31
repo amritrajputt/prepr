@@ -1,14 +1,18 @@
 'use client';
 
-import { File, X } from 'lucide-react';
+import { File, Loader2, X } from 'lucide-react';
 import { type ChangeEvent, type DragEvent, useRef, useState } from 'react';
+import { useAuth } from '@clerk/react';
+import axios from 'axios';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { parseResume } from '@/services/userdata';
 
 export default function FileUpload04() {
+  const { getToken } = useAuth();
   const [uploadState, setUploadState] = useState<{
     file: File | null;
     progress: number;
@@ -18,6 +22,7 @@ export default function FileUpload04() {
     progress: 0,
     uploading: false,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
@@ -47,14 +52,14 @@ export default function FileUpload04() {
 
     const interval = setInterval(() => {
       setUploadState((prev) => {
-        const newProgress = prev.progress + 5;
+        const newProgress = prev.progress + 10;
         if (newProgress >= 100) {
           clearInterval(interval);
           return { ...prev, progress: 100, uploading: false };
         }
         return { ...prev, progress: newProgress };
       });
-    }, 200);
+    }, 150);
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -73,6 +78,34 @@ export default function FileUpload04() {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file) return;
+
+    setIsSubmitting(true);
+    try {
+      const token = await getToken();
+      const result = await parseResume(file, token);
+      toast.success('Resume uploaded and parsed successfully!', {
+        position: 'bottom-right',
+        duration: 4000,
+      });
+      console.log('Upload result:', result);
+    } catch (error: unknown) {
+      console.error('Resume upload error:', error);
+      const errorMessage =
+        axios.isAxiosError(error) && error.response?.data?.message
+          ? (error.response.data.message as string)
+          : 'Failed to upload resume. Please try again.';
+      toast.error(errorMessage, {
+        position: 'bottom-right',
+        duration: 4000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -86,7 +119,7 @@ export default function FileUpload04() {
   return (
     <div className="w-full max-w-2xl mx-auto mt-6 flex justify-center items-center">
       <div className="w-full rounded-2xl border border-border bg-card shadow-sm p-6 text-center">
-        <form className="w-full" onSubmit={(e) => e.preventDefault()}>
+        <form className="w-full" onSubmit={handleSubmit}>
           <h3 className="font-semibold text-foreground text-base mb-1 text-center">
             Upload Resume
           </h3>
@@ -170,11 +203,18 @@ export default function FileUpload04() {
               </Button>
             )}
             <Button
-              className="whitespace-nowrap rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-medium px-6 h-10 cursor-pointer disabled:opacity-50"
-              disabled={!file || uploading || progress < 100}
+              className="whitespace-nowrap rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-medium px-6 h-10 cursor-pointer disabled:opacity-50 gap-2"
+              disabled={!file || uploading || progress < 100 || isSubmitting}
               type="submit"
             >
-              Start AI Interview
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Parsing...</span>
+                </>
+              ) : (
+                <span>Start AI Interview</span>
+              )}
             </Button>
           </div>
         </form>
