@@ -1,6 +1,6 @@
 'use client';
 
-import { File, FileSpreadsheet, X } from 'lucide-react';
+import { File, X } from 'lucide-react';
 import { type ChangeEvent, type DragEvent, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -18,35 +18,43 @@ export default function FileUpload04() {
     progress: 0,
     uploading: false,
   });
-  const [showDummy, setShowDummy] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const validFileTypes = [
-    'application/pdf',
-  ];
+  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
 
   const handleFile = (file: File | undefined) => {
     if (!file) return;
 
-    if (validFileTypes.includes(file.type)) {
-      setUploadState({ file, progress: 0, uploading: true });
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
 
-      const interval = setInterval(() => {
-        setUploadState((prev) => {
-          const newProgress = prev.progress + 5;
-          if (newProgress >= 100) {
-            clearInterval(interval);
-            return { ...prev, progress: 100, uploading: false };
-          }
-          return { ...prev, progress: newProgress };
-        });
-      }, 200);
-    } else {
-      toast.error('Please upload a CSV, XLSX, or XLS file.', {
+    if (!isPdf) {
+      toast.error('Only PDF files are accepted.', {
         position: 'bottom-right',
         duration: 3000,
       });
+      return;
     }
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error('File size exceeds the 2MB limit.', {
+        position: 'bottom-right',
+        duration: 3000,
+      });
+      return;
+    }
+
+    setUploadState({ file, progress: 0, uploading: true });
+
+    const interval = setInterval(() => {
+      setUploadState((prev) => {
+        const newProgress = prev.progress + 5;
+        if (newProgress >= 100) {
+          clearInterval(interval);
+          return { ...prev, progress: 100, uploading: false };
+        }
+        return { ...prev, progress: newProgress };
+      });
+    }, 200);
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -65,17 +73,6 @@ export default function FileUpload04() {
     }
   };
 
-  const getFileIcon = () => {
-    if (!uploadState.file) return <File />;
-
-    const fileExt = uploadState.file.name.split('.').pop()?.toLowerCase() || '';
-    return ['csv', 'xlsx', 'xls'].includes(fileExt) ? (
-      <FileSpreadsheet className="h-5 w-5 text-foreground" />
-    ) : (
-      <File className="h-5 w-5 text-foreground" />
-    );
-  };
-
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -87,31 +84,31 @@ export default function FileUpload04() {
   const { file, progress, uploading } = uploadState;
 
   return (
-    <div className="flex w-full max-w-lg items-center justify-center p-10">
-      <form className="w-full" onSubmit={(e) => e.preventDefault()}>
-        <h3 className="text-balance font-semibold text-foreground text-lg">
-          File Upload
-        </h3>
+    <div className="w-full max-w-2xl mx-auto mt-6 flex justify-center items-center">
+      <div className="w-full rounded-2xl border border-border bg-card shadow-sm p-6 text-center">
+        <form className="w-full" onSubmit={(e) => e.preventDefault()}>
+          <h3 className="font-semibold text-foreground text-base mb-1 text-center">
+            Upload Resume
+          </h3>
+          <p className="text-xs text-muted-foreground mb-4 text-center">
+            Upload your PDF resume to extract experience and target practice questions to your background.
+          </p>
 
-        <div
-          className="mt-2 flex justify-center rounded-md border border-input border-dashed px-6 py-12"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={handleDrop}
-        >
-          <div>
-            <File
-              aria-hidden={true}
-              className="mx-auto h-12 w-12 text-muted-foreground"
-            />
-            <div className="flex text-muted-foreground text-sm leading-6">
+          <div
+            className="flex flex-col items-center justify-center rounded-xl border border-border border-dashed px-6 py-10 hover:bg-secondary/40 transition-colors cursor-pointer"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDrop}
+          >
+            <File className="h-10 w-10 text-emerald-500 mb-3" />
+            <div className="flex items-center justify-center text-muted-foreground text-sm leading-6">
               <p>Drag and drop or</p>
               <label
-                className="relative cursor-pointer rounded-sm pl-1 font-medium text-primary hover:underline hover:underline-offset-4"
+                className="relative cursor-pointer rounded-sm pl-1 font-semibold text-emerald-500 hover:underline"
                 htmlFor="file-upload-03"
               >
                 <span>choose file</span>
                 <input
-                  accept=".csv, .xlsx, .xls"
+                  accept=".pdf,application/pdf"
                   className="sr-only"
                   id="file-upload-03"
                   name="file-upload-03"
@@ -120,106 +117,68 @@ export default function FileUpload04() {
                   type="file"
                 />
               </label>
-              <p className="text-pretty pl-1">to upload</p>
+              <p className="pl-1">to upload</p>
             </div>
           </div>
-        </div>
 
-        <p className="mt-2 text-pretty text-muted-foreground text-xs leading-5 sm:flex sm:items-center sm:justify-between">
-          <span>Accepted file types: CSV, XLSX or XLS files.</span>
-          <span className="pl-1 sm:pl-0">Max. size: 10MB</span>
-        </p>
+          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground px-1">
+            <span>Accepted type: PDF only</span>
+            <span>Max size: 2MB</span>
+          </div>
 
-        {!file && showDummy && (
-          <Card className="relative mt-8 gap-4 bg-muted p-4 shadow-none">
-            <Button
-              aria-label="Remove"
-              className="absolute top-1 right-1 text-muted-foreground hover:text-foreground"
-              onClick={() => setShowDummy(false)}
-              size="icon-sm"
-              type="button"
-              variant="ghost"
-            >
-              <X aria-hidden={true} className="h-5 w-5 shrink-0" />
-            </Button>
+          {file && (
+            <Card className="relative mt-4 gap-4 bg-muted p-4 shadow-none border border-border rounded-xl text-left">
+              <Button
+                aria-label="Remove"
+                className="absolute top-1 right-1 text-muted-foreground hover:text-foreground"
+                onClick={resetFile}
+                size="icon-sm"
+                type="button"
+                variant="ghost"
+              >
+                <X className="h-5 w-5 shrink-0" />
+              </Button>
 
-            <div className="flex items-center space-x-2.5">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-background shadow-sm ring-1 ring-border ring-inset">
-                <FileSpreadsheet
-                  aria-hidden={true}
-                  className="h-5 w-5 text-foreground"
-                />
-              </span>
-              <div>
-                <p className="text-pretty font-medium text-foreground text-xs">
-                  Revenue_Q1_2024.xlsx
-                </p>
-                <p className="mt-0.5 text-pretty text-muted-foreground text-xs">
-                  3.1 MB
-                </p>
+              <div className="flex items-center space-x-2.5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-background shadow-sm ring-1 ring-border ring-inset">
+                  <File className="h-5 w-5 text-emerald-500" />
+                </span>
+                <div>
+                  <p className="font-medium text-foreground text-xs">{file?.name}</p>
+                  <p className="mt-0.5 text-muted-foreground text-xs">
+                    {formatFileSize(file.size)}
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <div className="flex items-center space-x-3">
-              <Progress className="h-1.5" value={45} />
-              <span className="text-muted-foreground text-xs">45%</span>
-            </div>
-          </Card>
-        )}
-
-        {file && (
-          <Card className="relative mt-8 gap-4 bg-muted p-4 shadow-none">
-            <Button
-              aria-label="Remove"
-              className="absolute top-1 right-1 text-muted-foreground hover:text-foreground"
-              onClick={resetFile}
-              size="icon-sm"
-              type="button"
-              variant="ghost"
-            >
-              <X aria-hidden={true} className="h-5 w-5 shrink-0" />
-            </Button>
-
-            <div className="flex items-center space-x-2.5">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-background shadow-sm ring-1 ring-border ring-inset">
-                {getFileIcon()}
-              </span>
-              <div>
-                <p className="text-pretty font-medium text-foreground text-xs">
-                  {file?.name}
-                </p>
-                <p className="mt-0.5 text-pretty text-muted-foreground text-xs">
-                  {file && formatFileSize(file.size)}
-                </p>
+              <div className="flex items-center space-x-3 mt-2">
+                <Progress className="h-1.5" value={progress} />
+                <span className="text-muted-foreground text-xs">{progress}%</span>
               </div>
-            </div>
+            </Card>
+          )}
 
-            <div className="flex items-center space-x-3">
-              <Progress className="h-1.5" value={progress} />
-              <span className="text-muted-foreground text-xs">{progress}%</span>
-            </div>
-          </Card>
-        )}
-
-        <div className="mt-8 flex items-center justify-end space-x-3">
-          <Button
-            className="whitespace-nowrap"
-            disabled={!file}
-            onClick={resetFile}
-            type="button"
-            variant="outline"
-          >
-            Cancel
-          </Button>
-          <Button
-            className="whitespace-nowrap"
-            disabled={!file || uploading || progress < 100}
-            type="submit"
-          >
-            Upload
-          </Button>
-        </div>
-      </form>
+          <div className="mt-6 flex items-center justify-center space-x-3">
+            {file && (
+              <Button
+                className="whitespace-nowrap rounded-xl"
+                onClick={resetFile}
+                type="button"
+                variant="outline"
+              >
+                Cancel
+              </Button>
+            )}
+            <Button
+              className="whitespace-nowrap rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-medium px-6 h-10 cursor-pointer disabled:opacity-50"
+              disabled={!file || uploading || progress < 100}
+              type="submit"
+            >
+              Start AI Interview
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

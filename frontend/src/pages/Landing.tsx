@@ -1,17 +1,22 @@
+import { useState } from 'react';
 import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/react';
 import { ModeToggle } from '@/components/mode.toggle';
-import { ArrowRight, Bot } from "lucide-react";
-import { ActionButtons } from "@/components/ui/CtaButton";
+import { ArrowRight, Bot, Lock } from "lucide-react";
+import { ActionButtons, type OptionType } from "@/components/ui/CtaButton";
 import FileUpload04 from "@/components/file-upload-04";
 import TextBoxComponent from '@/components/ui/TextBoxComponent';
 import InputField from '@/components/ui/Input';
+import { Button } from '@/components/ui/button';
+
 export default function Landing() {
+  const [activeOption, setActiveOption] = useState<OptionType>("resume");
+
   return (
-     <div className="min-h-screen bg-background text-foreground transition-colors">
+    <div className="min-h-screen bg-background text-foreground transition-colors">
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="max-w-7xl mx-auto px-5">
           <nav className="flex items-center justify-between py-4">
-           
+
             <h1 className="font-bold text-xl text-foreground cursor-pointer flex items-center gap-2">
               <span className="w-8 h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center text-sm font-extrabold shadow-sm">
                 AI
@@ -55,7 +60,7 @@ export default function Landing() {
                 </li>
               </ul>
             </div>
-            
+
             <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
               <ModeToggle />
               <Show when="signed-out">
@@ -113,12 +118,32 @@ export default function Landing() {
           <h3 className="mt-8 text-sm sm:text-base md:text-lg font-semibold text-emerald-500 dark:text-emerald-400 text-center max-w-2xl mx-auto tracking-wide">
             Start your interview using any one of the options below:
           </h3>
-          <ActionButtons />
-          <FileUpload04/>
-          <TextBoxComponent/>
-          <InputField />
+          <ActionButtons activeOption={activeOption} onSelectOption={setActiveOption} />
+
+          <Show when="signed-out">
+            <div className="w-full max-w-md mx-auto mt-8 p-6 rounded-2xl border border-border bg-card shadow-sm text-center">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto mb-3">
+                <Lock className="w-5 h-5" />
+              </div>
+              <h4 className="font-semibold text-foreground text-base mb-1">Authentication Required</h4>
+              <p className="text-xs text-muted-foreground mb-4">Please sign in to start your AI-powered mock interview practice.</p>
+              <SignInButton mode="modal">
+                <Button className="rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-6 cursor-pointer">
+                  Sign In to Start
+                </Button>
+              </SignInButton>
+            </div>
+          </Show>
+
+          <Show when="signed-in">
+            <div className="transition-all duration-300 flex justify-center items-center w-full">
+              {activeOption === "resume" && <FileUpload04 />}
+              {activeOption === "jd" && <TextBoxComponent />}
+              {activeOption === "github" && <InputField />}
+            </div>
+          </Show>
         </div>
       </main>
     </div>
-  )
+  );
 }
