@@ -61,6 +61,7 @@ export const resumesTable = pgTable("resumes", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   userId: varchar("user_id", { length: 255 })
     .notNull()
+    .unique()
     .references(() => usersTable.id, { onDelete: "cascade" }),
   rawText: text("raw_text").notNull(),
   fileName: varchar("file_name", { length: 255 }),
