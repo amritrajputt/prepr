@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useUser, useAuth, UserButton } from "@clerk/react";
 import { Bot, Mic, User as UserIcon, X } from "lucide-react";
+
 import api from "../services/api";
 
 type Status = "connecting" | "live" | "ending";
@@ -42,13 +43,10 @@ export function Interview({ interviewId: propInterviewId }: InterviewProps = {})
   const [aiLevel, setAiLevel] = useState<number>(0);
   const [showInstruction, setShowInstruction] = useState<boolean>(true);
 
-  //reference to clean when component unmounts
-
+  // reference to clean when component unmounts
   const pcRef = useRef<RTCPeerConnection | null>(null);
-  const socketRef = useRef<WebSocket | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const userStreamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number | null>(null);
 
@@ -84,27 +82,6 @@ export function Interview({ interviewId: propInterviewId }: InterviewProps = {})
       }
       userStreamRef.current = ms;
       userMeter = createLevelMeter(audioContext, ms);
-      const socket = new WebSocket('wss://api.deepgram.com/v1/listen', [
-        'token', ''
-      ]);
-      socketRef.current = socket;
-
-      socket.onopen = () => {
-        const mediaRecorder = new MediaRecorder(ms, { mimeType: 'audio/webm' });
-        mediaRecorderRef.current = mediaRecorder;
-        mediaRecorder.start(250);
-        mediaRecorder.addEventListener('dataavailable', (event) => {
-          if (socket.readyState === WebSocket.OPEN) socket.send(event.data);
-        });
-      };
-
-      socket.onmessage = (message) => {
-        const received = JSON.parse(message.data);
-        const transcript = received.channel?.alternatives[0]?.transcript;
-        if (transcript) {
-          console.log(transcript);
-        }
-      };
 
       if (!pc) return;
 
@@ -147,17 +124,16 @@ export function Interview({ interviewId: propInterviewId }: InterviewProps = {})
 
   function cleanup() {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    mediaRecorderRef.current?.state !== "inactive" && mediaRecorderRef.current?.stop();
-    socketRef.current?.close();
     userStreamRef.current?.getTracks().forEach((t) => t.stop());
     pcRef.current?.getSenders().forEach((s) => s.track?.stop());
     pcRef.current?.close();
     audioContextRef.current?.close().catch(() => { });
   }
+
   function endInterview() {
     setStatus("ending");
     cleanup();
-    navigate(`/result/${interviewId}`);
+    navigate({ to: "/" });
   }
   const handleCancel = () => {
     navigate({ to: "/" });
@@ -236,11 +212,10 @@ export function Interview({ interviewId: propInterviewId }: InterviewProps = {})
             <h2 className="text-lg font-bold tracking-wide">
               {user?.fullName || user?.firstName || "Candidate"}
             </h2>
-            <p className="text-xs text-muted-foreground mt-1">
-              {user?.primaryEmailAddress?.emailAddress || "Interview Candidate"}
-            </p>
           </div>
         </div>
+
+    
       </main>
 
       <footer className="w-full max-w-5xl flex justify-center pb-4">
