@@ -24,42 +24,6 @@ export default function Landing() {
               PREPR AI
             </h1>
 
-            <div className="hidden md:flex items-center">
-              <ul className="flex items-center space-x-2 text-muted-foreground font-medium">
-                <li>
-                  <a
-                    href="#"
-                    className="inline-block rounded-md px-3 py-2 hover:text-[#43C96A] transition-colors"
-                  >
-                    Home
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="inline-block rounded-md px-3 py-2 hover:text-[#43C96A] transition-colors"
-                  >
-                    Blog
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="inline-block rounded-md px-3 py-2 hover:text-[#43C96A] transition-colors"
-                  >
-                    Learn & grow
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="inline-block rounded-md px-3 py-2 hover:text-[#43C96A] transition-colors"
-                  >
-                    Notes
-                  </a>
-                </li>
-              </ul>
-            </div>
 
             <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
               <ModeToggle />
