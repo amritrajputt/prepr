@@ -8,6 +8,7 @@ import { DeepgramClient } from "@deepgram/sdk";
 type InterviewProps = {
   interviewId?: string;
 };
+type Status = "connecting" | "live" | "ending";
 
 export function Interview({ interviewId: propInterviewId }: InterviewProps) {
   const routeParams = useParams({ strict: false }) as Record<string, string | undefined>;
@@ -17,6 +18,21 @@ export function Interview({ interviewId: propInterviewId }: InterviewProps) {
   const navigate = useNavigate();
   const audioElement = useRef<HTMLAudioElement | null>(null);
   const [showInstruction, setShowInstruction] = useState(true);
+
+  const [status, setStatus] = useState<Status>("connecting");
+  const [userLevel, setUserLevel] = useState<number>(0);
+  const [aiLevel, setAiLevel] = useState<number>(0);
+
+  //reference to clean when component unmounts
+
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const rafRef = useRef<number | null>(null);
+
+
 
   useEffect(() => {
     const timer = setTimeout(() => {
