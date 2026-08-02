@@ -126,7 +126,7 @@ export function Interview({ interviewId: propInterviewId }: InterviewProps) {
               />
             </div>
             <h2 className="text-lg font-bold tracking-wide flex items-center gap-2">
-              <Bot className="w-5 h-5 text-primary" /> AI Interviewer
+              <Bot className="w-5 h-5 text-primary" /> PREPR AI 
             </h2>
             <p className="text-xs text-muted-foreground mt-1">Realtime Voice Agent</p>
             <div className="mt-3 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-xs font-medium flex items-center gap-1.5">
