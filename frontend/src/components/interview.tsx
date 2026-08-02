@@ -3,8 +3,6 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import { useUser, useAuth, UserButton } from "@clerk/react";
 import { Bot, Mic, User as UserIcon, X } from "lucide-react";
 import api from "../services/api";
-import { VoiceOrb } from "./VoiceOrb";
-
 
 type Status = "connecting" | "live" | "ending";
 function createLevelMeter(ctx: AudioContext, stream: MediaStream) {
@@ -28,49 +26,56 @@ function createLevelMeter(ctx: AudioContext, stream: MediaStream) {
     };
 }
 
-export function Interview() {
+interface InterviewProps {
+  interviewId?: string;
+}
 
-  const {interviewId} = useParams();
+export function Interview({ interviewId: propInterviewId }: InterviewProps = {}) {
+
+  const params = useParams({ strict: false });
+  const interviewId = propInterviewId || (params as Record<string, string>)?.interviewId;
+  const { user } = useUser();
   const { getToken } = useAuth();
   const navigate = useNavigate();
   const [status, setStatus] = useState<Status>("connecting");
   const [userLevel, setUserLevel] = useState<number>(0);
   const [aiLevel, setAiLevel] = useState<number>(0);
+  const [showInstruction, setShowInstruction] = useState<boolean>(true);
 
   //reference to clean when component unmounts
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const userStreamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number | null>(null);
 
-
-
+  useEffect(() => {
+    const timer = setTimeout(() => setShowInstruction(false), 10000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-
 
     (async () => {
       const pc: RTCPeerConnection | null = new RTCPeerConnection();
       pcRef.current = pc;
       const audioContext = new AudioContext();
-      audioContextRef.current = audioContext
+      audioContextRef.current = audioContext;
 
       let aiMeter: (() => number) | null = null;
       let userMeter: (() => number) | null = null;
-      // play + track the audio from the remote peer connection
-      const audioElement = document.createElement("audio");
-      audioElement.autoplay = true;
+
       pc.ontrack = (e) => {
         const stream = e.streams[0];
-        audioElement.srcObject = stream
+        if (remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = stream;
+        }
         aiMeter = createLevelMeter(audioContext, stream);
-      }
-
-
+      };
 
       const ms = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (cancelled) {
@@ -103,18 +108,22 @@ export function Interview() {
 
       if (!pc) return;
 
-      pc.addTrack(ms.getTracks()[0])!;
+      pc.addTrack(ms.getTracks()[0]!);
 
       const offer = await pc.createOffer();
-      const sdpResponse = await api.post(`/api/session/${interviewId}`, {
-        method: "POST",
-        body: offer.sdp,
-        headers: { "Content-Type": "application/sdp" }
+      await pc.setLocalDescription(offer);
+
+      const token = await getToken();
+      const sdpResponse = await api.post(`/api/session/${interviewId}`, offer.sdp, {
+        headers: {
+          "Content-Type": "application/sdp",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
       });
 
-      const answer: RTCSessionDescriptionInit= {
+      const answer: RTCSessionDescriptionInit = {
         type: "answer",
-        sdp: await sdpResponse.text()
+        sdp: sdpResponse.data
       };
       await pc.setRemoteDescription(answer);
 
@@ -122,20 +131,19 @@ export function Interview() {
       setStatus("live");
 
       const tick = () => {
-        if (aimeter) setAiLevel(aimeter());
-        if (usermeter) setUserLevel(usermeter());
+        if (aiMeter) setAiLevel(aiMeter());
+        if (userMeter) setUserLevel(userMeter());
         rafRef.current = requestAnimationFrame(tick);
       };
       rafRef.current = requestAnimationFrame(tick);
     })();
 
     return () => {
-      cancelled = true
+      cancelled = true;
       cleanup();
+    };
 
-    }
-
-  }, [InterviewId]);
+  }, [interviewId]);
 
   function cleanup() {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -159,7 +167,7 @@ export function Interview() {
 
   return (
     <div className="flex flex-col items-center justify-between min-h-screen p-6 bg-gradient-to-b from-background via-background/95 to-muted/40 text-foreground">
-      <audio ref={audioContextRef} autoPlay playsInline className="hidden" />
+      <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
 
       <header className="w-full max-w-5xl flex items-center justify-between py-4 border-b border-border/40">
         <div className="flex items-center gap-3">
@@ -179,7 +187,6 @@ export function Interview() {
       </header>
 
       <main className="w-full max-w-5xl my-auto py-8">
-        {/* Say Go Ahead Instruction Card (Hides after 10 seconds) */}
         {showInstruction && (
           <div className="w-full max-w-xl mx-auto mb-8 p-4 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 text-center backdrop-blur-md shadow-lg transition-all duration-500">
             <p className="text-sm font-semibold text-emerald-400 flex items-center justify-center gap-2">
